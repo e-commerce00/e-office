@@ -1,42 +1,42 @@
 FROM php:8.3-cli
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies + ekstensi PHP
+# Install system dependencies + PHP extensions
 RUN apt-get update && apt-get install -y \
     git curl zip unzip \
-    libfreetype6-dev \
-    libjpeg62-turbo-dev \
-    libpng-dev \
+    libsqlite3-dev \
     libzip-dev \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
     pkg-config \
     libonig-dev \
-    libsqlite3-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd zip pdo pdo_mysql pdo_sqlite
+    && docker-php-ext-install pdo pdo_sqlite zip gd
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copy semua file project
+# Copy project files
 COPY . .
 
-# Install dependency Laravel
+# Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Set permission
-RUN chmod -R 775 storage bootstrap/cache
+# Create SQLite database file
+RUN mkdir -p database \
+    && touch database/database.sqlite \
+    && chmod -R 775 storage bootstrap/cache database
 
-# Cache config untuk production
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
+# IMPORTANT: jangan cache config di Railway (bisa bikin 502)
+RUN php artisan config:clear \
+    && php artisan route:clear \
+    && php artisan view:clear
 
-# Railway kasih PORT dinamis, default 8080
+# Railway uses dynamic port
 ENV PORT=8080
-
 EXPOSE 8080
 
-# Gunakan PHP built-in server (lebih stabil daripada artisan serve)
-CMD php -S 0.0.0.0:${PORT} -t public
+# Start server properly
+CMD sh -c "php -S 0.0.0.0:${PORT:-8080} -t public"
