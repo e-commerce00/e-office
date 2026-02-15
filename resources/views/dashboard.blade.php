@@ -81,7 +81,7 @@
             <div class="card-icon" style="background: linear-gradient(135deg, #d90429, #d90429);">
                 <div class="text">
                     <h6>Pengguna</h6>
-                    <h2>{{ count(session()->all()) > 0 ? '5' : '0' }}</h2>
+                    <h2>{{ count(session()->all()) > 0 ? '6' : '0' }}</h2>
                     <small>Orang Terdaftar</small>
                 </div>
                 <i class="bi bi-people icon"></i>
