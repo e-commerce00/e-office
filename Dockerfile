@@ -12,8 +12,9 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     pkg-config \
     libonig-dev \
+    libsqlite3-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd zip
+    && docker-php-ext-install gd zip pdo pdo_mysql pdo_sqlite
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -24,18 +25,18 @@ COPY . .
 # Install dependency Laravel
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Buat file SQLite + set permission
-RUN mkdir -p database \
-    && touch database/database.sqlite \
-    && chmod -R 775 storage bootstrap/cache database
+# Set permission
+RUN chmod -R 775 storage bootstrap/cache
 
-# Clear cache (PENTING supaya env Railway kebaca)
-RUN php artisan config:clear \
-    && php artisan route:clear \
-    && php artisan view:clear
+# Cache config untuk production
+RUN php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
 
-# Expose port
-EXPOSE 8000
+# Railway kasih PORT dinamis, default 8080
+ENV PORT=8080
 
-# Start Laravel
-CMD php artisan serve --host=0.0.0.0 --port=${PORT}
+EXPOSE 8080
+
+# Gunakan PHP built-in server (lebih stabil daripada artisan serve)
+CMD php -S 0.0.0.0:${PORT} -t public
