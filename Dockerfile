@@ -1,8 +1,9 @@
 FROM php:8.3-cli
 
+# Set working directory
 WORKDIR /app
 
-# Install system dependencies + PHP extensions
+# Install system dependencies & PHP extensions
 RUN apt-get update && apt-get install -y \
     git curl zip unzip \
     libsqlite3-dev \
@@ -24,19 +25,19 @@ COPY . .
 # Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Create SQLite database file
+# Create SQLite database file inside container
 RUN mkdir -p database \
     && touch database/database.sqlite \
     && chmod -R 775 storage bootstrap/cache database
 
-# IMPORTANT: jangan cache config di Railway (bisa bikin 502)
-RUN php artisan config:clear \
-    && php artisan route:clear \
-    && php artisan view:clear
-
-# Railway uses dynamic port
+# Railway dynamic port
 ENV PORT=8080
 EXPOSE 8080
 
-# Start server properly
-CMD sh -c "php -S 0.0.0.0:${PORT:-8080} -t public"
+# Start Laravel properly (runtime safe)
+CMD sh -c "\
+php artisan config:clear && \
+php artisan route:clear && \
+php artisan view:clear && \
+php artisan migrate --force && \
+php -S 0.0.0.0:${PORT:-8080} -t public"
