@@ -1,15 +1,16 @@
-# Gunakan image PHP CLI resmi
-FROM php:8.2-cli
+# Gunakan PHP 8.3 CLI resmi
+FROM php:8.3-cli
 
-# Install GD dan dependencies
+# Install ekstensi yang dibutuhkan: GD, ZIP, dan library pendukung
 RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
     libpng-dev \
+    zip unzip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd
+    && docker-php-ext-install gd zip
 
-# Install Composer (jika belum ada di image)
+# Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Set working directory
@@ -24,5 +25,5 @@ RUN composer install --optimize-autoloader --no-scripts --no-interaction
 # Salin sisa kode aplikasi
 COPY . .
 
-# Default command (opsional)
+# Entry point (ubah sesuai entry point aplikasi)
 CMD ["php", "index.php"]
